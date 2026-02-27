@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CRUD Pacientes</title>
+    <style>
+        body{font-family:Arial;margin:40px}
+        input{margin:5px}
+        table{border-collapse:collapse;margin-top:20px}
+        td,th{border:1px solid #ccc;padding:8px}
+    </style>
+</head>
+
+<body>
+
+<h2>Crear Paciente</h2>
+
+<input id="nombre1" placeholder="Nombre">
+<input id="apellido1" placeholder="Apellido">
+<input id="correo" placeholder="Correo">
+<button onclick="crear()">Guardar</button>
+
+<h2>Pacientes</h2>
+
+<table id="tabla">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Correo</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<script>
+
+async function cargar(){
+
+    let res = await fetch('/pacientes');
+    let data = await res.json();
+
+    let tbody = document.querySelector('#tabla tbody');
+    tbody.innerHTML='';
+
+    data.forEach(p=>{
+        tbody.innerHTML += `
+            <tr>
+                <td>${p.id}</td>
+                <td>${p.nombre1} ${p.apellido1}</td>
+                <td>${p.correo}</td>
+            </tr>
+        `;
+    });
+}
+
+async function crear(){
+
+    let paciente = {
+        tipo_documento_id:1,
+        numero_documento:Date.now().toString(),
+        nombre1:document.getElementById('nombre1').value,
+        nombre2:'',
+        apellido1:document.getElementById('apellido1').value,
+        apellido2:'',
+        genero_id:1,
+        departamento_id:1,
+        municipio_id:1,
+        correo:document.getElementById('correo').value
+    };
+
+    await fetch('/pacientes',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(paciente)
+    });
+
+    cargar();
+}
+
+cargar();
+
+</script>
+
+</body>
+</html>
