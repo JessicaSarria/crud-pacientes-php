@@ -2,32 +2,55 @@
 
 require_once __DIR__ . '/../config/Database.php';
 require_once __DIR__ . '/../controllers/PacienteController.php';
+require_once __DIR__ . '/../controllers/UserController.php';
 
 header("Content-Type: application/json");
+
+if(session_status() === PHP_SESSION_NONE){
+    session_start();
+}
 
 $db = new Database();
 $conn = $db->connect();
 
-$controller = new PacienteController($conn);
+$pacienteController = new PacienteController($conn);
+$userController = new UserController($conn);
 
 $method = $_SERVER['REQUEST_METHOD'];
-$path = $_SERVER['REQUEST_URI'];
 
-// Extraer ID si viene /pacientes/1
-$segments = explode('/', trim($path,'/'));
-$id = $segments[1] ?? null;
+$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$segments = explode('/', trim($uri,'/'));
 
-if($method === 'GET' && $segments[0] === 'pacientes'){
-    $controller->listar();
+$route = end($segments);   // 🔥 clave
+$id = $segments[count($segments)-1] ?? null;
+
+/* ===== AUTH ===== */
+
+if($method === 'POST' && $route === 'login'){
+    $userController->login();
 }
-elseif($method === 'POST' && $segments[0] === 'pacientes'){
-    $controller->crear();
+elseif($method === 'GET' && $route === 'logout'){
+    $userController->logout();
 }
-elseif($method === 'PUT' && $segments[0] === 'pacientes' && $id){
-    $controller->actualizar($id);
+elseif($method === 'GET' && $route === 'check'){
+    $userController->check();
 }
-elseif($method === 'DELETE' && $segments[0] === 'pacientes' && $id){
-    $controller->eliminar($id);
+
+/* ===== PACIENTES ===== */
+
+elseif($method === 'GET' && $route === 'pacientes'){
+    $pacienteController->listar();
+}
+elseif($method === 'POST' && $route === 'pacientes'){
+    $pacienteController->crear();
+}
+elseif($method === 'PUT' && strpos($uri,'pacientes')!==false){
+    $id = basename($uri);
+    $pacienteController->actualizar($id);
+}
+elseif($method === 'DELETE' && strpos($uri,'pacientes')!==false){
+    $id = basename($uri);
+    $pacienteController->eliminar($id);
 }
 else{
     echo json_encode(["mensaje"=>"Ruta no encontrada"]);
